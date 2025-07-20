@@ -1,0 +1,15 @@
+# IDE files
+.idea
+.vscode
+
+# Claude configuration (contains sensitive data)
+.claude
+.claude.json
+
+# Environment files
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.log
