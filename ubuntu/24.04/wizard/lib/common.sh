@@ -32,8 +32,6 @@ log_step() {
 # Interactive confirmation for reinstallation
 confirm_reinstall() {
     local target_script="$1"
-    local current_version=""
-    local current_plugins=""
     
     echo
     log_warn "$SCRIPT_NAME is already installed at $target_script"
@@ -42,11 +40,17 @@ confirm_reinstall() {
     if [[ -x "$target_script" ]]; then
         echo -e "${BLUE}Current installation details:${NC}"
         echo "  Location: $target_script"
-        echo "  Installed: $(stat -c %y "$target_script" 2>/dev/null | cut -d' ' -f1 2>/dev/null || echo "Unknown")"
+        local install_date
+        install_date=$(stat -c %y "$target_script" 2>/dev/null | cut -d' ' -f1 2>/dev/null) || install_date="Unknown"
+        echo "  Installed: $install_date"
         
         # Check for Docker image
         if command -v docker >/dev/null 2>&1; then
-            local image_info=$(docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}\t{{.Size}}" --filter "reference=claude-sandbox:latest" --no-trunc 2>/dev/null | tail -n +2)
+            local docker_output
+            docker_output=$(docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}\t{{.Size}}" --no-trunc 2>/dev/null)
+            local image_info
+            image_info=$(echo "$docker_output" | grep -E "^claude-sandbox\s+latest\s+" || echo "")
+            
             if [[ -n "$image_info" ]]; then
                 echo "  Docker image: claude-sandbox:latest"
                 echo "    $image_info"
