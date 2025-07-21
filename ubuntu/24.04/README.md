@@ -151,9 +151,10 @@ This removes:
 ### Container Specifications
 
 - **Image Name**: `claude-sandbox`
-- **Container Name**: `claude-sandbox-{UID}` (unique per user)
+- **Container Name**: `claude-sandbox-{UID}-{timestamp}-{PID}-{random}` (unique per instance)
 - **Networking**: Host network (inherits from host)
 - **Storage**: Ephemeral containers (removed after each run)
+- **Conflict Detection**: Automatic detection and user-friendly error messages for rare name conflicts
 
 ### Volume Mounts
 

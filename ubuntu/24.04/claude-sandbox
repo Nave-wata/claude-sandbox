@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SANDBOX_DIR="$SCRIPT_DIR/sandbox"
 IMAGE_NAME="claude-sandbox"
-CONTAINER_NAME="claude-sandbox-$(id -u)"
+CONTAINER_NAME="claude-sandbox-$(id -u)-$(date +%s)-$$-$(shuf -i 1000-9999 -n 1)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -61,8 +61,13 @@ run_claude_sandbox() {
     log_info "Starting Claude Sandbox..."
     log_info "Mounting current directory: $workdir"
     
-    # Remove existing container if it exists
-    docker rm -f "$CONTAINER_NAME" &> /dev/null || true
+    # Check if container name already exists before running
+    if docker ps -a --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+        log_error "Container name conflict detected: $CONTAINER_NAME"
+        log_error "This is extremely rare but can happen if multiple instances start simultaneously."
+        log_error "Please try running the command again."
+        exit 1
+    fi
     
     # Run Claude in sandbox with current directory mounted
     # Pass all arguments directly to claude command
