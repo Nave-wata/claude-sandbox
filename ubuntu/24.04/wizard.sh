@@ -35,8 +35,8 @@ DESCRIPTION:
     command which provides a containerized Claude Code environment with the
     current directory mounted as the working space.
     
-    NOTE: If claude-sandbox is already installed, you must uninstall it first
-    before installing again.
+    NOTE: If claude-sandbox is already installed, the wizard will detect it
+    and ask for confirmation before reinstalling (command + Docker image).
 
 INSTALLATION:
     - System-wide (requires sudo): /usr/local/bin/claude-sandbox

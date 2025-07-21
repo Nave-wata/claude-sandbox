@@ -29,6 +29,59 @@ log_step() {
     echo -e "${BLUE}[STEP]${NC} $1"
 }
 
+# Interactive confirmation for reinstallation
+confirm_reinstall() {
+    local target_script="$1"
+    local current_version=""
+    local current_plugins=""
+    
+    echo
+    log_warn "$SCRIPT_NAME is already installed at $target_script"
+    
+    # Try to get current installation info
+    if [[ -x "$target_script" ]]; then
+        echo -e "${BLUE}Current installation details:${NC}"
+        echo "  Location: $target_script"
+        echo "  Installed: $(stat -c %y "$target_script" 2>/dev/null | cut -d' ' -f1 2>/dev/null || echo "Unknown")"
+        
+        # Check for Docker image
+        if command -v docker >/dev/null 2>&1; then
+            local image_info=$(docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}\t{{.Size}}" --filter "reference=claude-sandbox:latest" --no-trunc 2>/dev/null | tail -n +2)
+            if [[ -n "$image_info" ]]; then
+                echo "  Docker image: claude-sandbox:latest"
+                echo "    $image_info"
+            else
+                echo "  Docker image: Not found (will be created)"
+            fi
+        fi
+    fi
+    
+    echo
+    echo -e "${YELLOW}Do you want to overwrite the existing installation?${NC}"
+    echo "  [y] Yes, reinstall (this will remove and recreate command + Docker image)"
+    echo "  [n] No, cancel installation"
+    echo
+    
+    while true; do
+        read -p "Choice [y/n]: " choice
+        case "$choice" in
+            [Yy]|[Yy][Ee][Ss])
+                echo
+                log_info "Proceeding with reinstallation..."
+                return 0
+                ;;
+            [Nn]|[Nn][Oo])
+                echo
+                return 1
+                ;;
+            *)
+                echo "Please answer y (yes) or n (no)."
+                ;;
+        esac
+    done
+}
+
+
 # Check privileges and set installation directory
 check_privileges() {
     # Get the original user when running with sudo
@@ -82,12 +135,16 @@ install_command() {
         exit 1
     fi
     
-    # Check if already installed
+    # Check if already installed and handle interactive confirmation
     if [[ -f "$target_script" ]]; then
-        log_warn "$SCRIPT_NAME is already installed at $target_script"
-        log_info "Please run './wizard.sh uninstall' first to remove the existing installation"
-        log_info "This prevents accidental overwrites and ensures clean installation"
-        exit 1
+        if ! confirm_reinstall "$target_script"; then
+            log_info "Installation cancelled by user"
+            exit 0
+        fi
+        
+        log_step "Removing existing installation..."
+        rm -f "$target_script"
+        log_info "Existing installation removed"
     fi
     
     # Copy script to install directory
@@ -177,7 +234,13 @@ build_docker_image() {
             exit 1
         fi
     else
-        log_info "Docker image already exists, skipping build"
+        log_info "Rebuilding existing Docker image..."
+        if docker build -t "$image_name" "$sandbox_dir"; then
+            log_info "Docker image rebuilt successfully"
+        else
+            log_error "Failed to rebuild Docker image"
+            exit 1
+        fi
     fi
 }
 
