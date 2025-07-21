@@ -19,8 +19,14 @@ This directory contains the Ubuntu 24.04 implementation of Claude Sandbox, provi
 
 2. **Run the setup wizard:**
    ```bash
-   # Default user-local installation (no sudo required)
+   # Default installation (nodejs only)
    ./wizard.sh
+   
+   # With custom plugins for multi-language development
+   ./wizard.sh --plugins uv,cmake,java
+   
+   # Python development environment
+   ./wizard.sh --plugins uv
    
    # Optional: System-wide installation (requires sudo)
    sudo ./wizard.sh
@@ -68,9 +74,11 @@ alias cs='claude-sandbox'        # Short alias
 
 This implementation uses:
 - **Base Image**: `node:24.4-slim`
+- **Version Manager**: asdf (v0.18.0 with security-hardened SHA verification)
 - **Working Directory**: `/workspace` (mounted from current directory)
 - **User**: `node` (UID 1000)
 - **Package Manager**: npm (for Claude Code installation)
+- **Plugin Support**: Dynamic asdf plugin installation for multi-language development
 
 ### Directory Structure
 
@@ -94,7 +102,21 @@ ubuntu/24.04/
 
 ### Container Customization
 
-The Docker container is pre-configured with Node.js 24.4 and Claude Code. The container environment can be customized by modifying the `sandbox/Dockerfile` to install additional tools or configure the environment as needed.
+The Docker container is pre-configured with Node.js 24.4, asdf version manager, and Claude Code. You can customize the environment in several ways:
+
+1. **Using Plugin Options**: Specify plugins during installation:
+   ```bash
+   ./wizard.sh --plugins uv,cmake,java,golang
+   ```
+
+2. **Manual Dockerfile Modification**: Modify `sandbox/Dockerfile` for advanced customizations
+
+3. **Supported Plugins**: Common plugins include `uv` (Python), `cmake`, `java`, `golang`, `rust`, `terraform`, etc.
+
+**Plugin Installation Features**:
+- Automatic stable version preference with latest fallback
+- Robust error handling with warning messages
+- Security-hardened asdf installation using commit SHA verification
 
 ## Troubleshooting
 
