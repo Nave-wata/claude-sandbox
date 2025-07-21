@@ -91,28 +91,6 @@ install_command() {
     log_info "Installed $SCRIPT_NAME to $target_script"
 }
 
-# Update PATH if necessary
-update_path() {
-    if [[ "$INSTALL_DIR" == "$USER_HOME/.local/bin" ]]; then
-        # Check if ~/.local/bin is in PATH
-        if [[ ":$PATH:" != *":$USER_HOME/.local/bin:"* ]]; then
-            log_step "Adding $USER_HOME/.local/bin to PATH..."
-            
-            # Add to .bashrc
-            if [[ -f "$USER_HOME/.bashrc" ]]; then
-                echo "" >> "$USER_HOME/.bashrc"
-                echo "# Added by claude-sandbox installer" >> "$USER_HOME/.bashrc"
-                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$USER_HOME/.bashrc"
-                log_info "Added PATH export to $USER_HOME/.bashrc"
-            fi
-            
-            # Apply PATH changes to current shell session immediately
-            export PATH="$USER_HOME/.local/bin:$PATH"
-            log_info "PATH updated for current session - claude-sandbox is now available"
-        fi
-    fi
-}
-
 
 # Build Docker image
 build_docker_image() {
@@ -159,7 +137,18 @@ show_summary() {
     echo ""
     
     if [[ "$INSTALL_DIR" == "$USER_HOME/.local/bin" ]]; then
-        echo "✅ claude-sandbox command is ready to use immediately!"
+        echo "⚠️  PATH Setup Required:"
+        echo "   Step 1: Try reloading your shell configuration"
+        echo "   source ~/.profile"
+        echo ""
+        echo "   Step 2: Test if the command works"
+        echo "   claude-sandbox --help"
+        echo ""
+        echo "   Step 3: If the command is still not found, add to ~/.bashrc and reload:"
+        echo "   echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
+        echo "   source ~/.bashrc"
+        echo ""
+        echo "   Alternative: Restart your terminal instead of using 'source'"
     fi
     
     echo ""
@@ -195,8 +184,7 @@ uninstall() {
         rm -f "$target_script"
         log_info "Removed $target_script"
     fi
-    
-    
+
     log_info "Claude Sandbox uninstalled successfully"
 }
 
@@ -245,7 +233,6 @@ main() {
     check_privileges
     check_prerequisites
     install_command
-    update_path
     build_docker_image
     show_summary
 }
