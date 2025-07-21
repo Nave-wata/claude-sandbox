@@ -8,7 +8,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SANDBOX_DIR="$SCRIPT_DIR/sandbox"
 IMAGE_NAME="claude-sandbox"
-CONTAINER_NAME="claude-sandbox-$(id -u)-$(date +%s)-$$-$(shuf -i 1000-9999 -n 1)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -26,6 +25,35 @@ log_warn() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Generate container name with robust error handling
+generate_container_name() {
+    local USER_ID="$(id -u)"
+    if [ -z "$USER_ID" ]; then
+        log_error "Failed to retrieve user ID."
+        exit 1
+    fi
+
+    local TIMESTAMP="$(date +%s)"
+    if [ -z "$TIMESTAMP" ]; then
+        log_error "Failed to retrieve timestamp."
+        exit 1
+    fi
+
+    local PROCESS_ID="$$"
+    if [ -z "$PROCESS_ID" ]; then
+        log_error "Failed to retrieve process ID."
+        exit 1
+    fi
+
+    local RANDOM_SUFFIX="$(shuf -i 1000-9999 -n 1)"
+    if [ -z "$RANDOM_SUFFIX" ]; then
+        log_error "Failed to generate random suffix."
+        exit 1
+    fi
+
+    echo "claude-sandbox-${USER_ID}-${TIMESTAMP}-${PROCESS_ID}-${RANDOM_SUFFIX}"
 }
 
 # Check if Docker is available
@@ -57,12 +85,13 @@ get_workdir() {
 # Main function to run Claude in sandbox
 run_claude_sandbox() {
     local workdir="$(get_workdir)"
+    local CONTAINER_NAME="$(generate_container_name)"
     
     log_info "Starting Claude Sandbox..."
     log_info "Mounting current directory: $workdir"
     
     # Check if container name already exists before running
-    if docker ps -a --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+    if docker inspect "$CONTAINER_NAME" &> /dev/null; then
         log_error "Container name conflict detected: $CONTAINER_NAME"
         log_error "This is extremely rare but can happen if multiple instances start simultaneously."
         log_error "Please try running the command again."
