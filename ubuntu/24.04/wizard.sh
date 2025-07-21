@@ -92,6 +92,63 @@ install_command() {
 }
 
 
+# Generate plugin setup script from template
+generate_plugin_setup_script() {
+    local plugins="$1"
+    local sandbox_dir="$SCRIPT_DIR/sandbox"
+    local template_script="$sandbox_dir/setup-plugins.template.sh"
+    local setup_script="$sandbox_dir/setup-plugins.sh"
+    
+    log_step "Generating plugin setup script..."
+    
+    if [[ ! -f "$template_script" ]]; then
+        log_error "Template script not found: $template_script"
+        exit 1
+    fi
+    
+    # Copy template to target script
+    cp "$template_script" "$setup_script"
+    
+    # Add plugin installation commands to the end
+    if [[ -n "$plugins" ]]; then
+        log_info "Adding plugins: $plugins"
+        
+        echo "" >> "$setup_script"
+        echo "# Plugin installations" >> "$setup_script"
+        
+        # Split plugins by comma and process each
+        IFS=',' read -ra PLUGIN_ARRAY <<< "$plugins"
+        for plugin in "${PLUGIN_ARRAY[@]}"; do
+            # Trim whitespace
+            plugin=$(echo "$plugin" | xargs)
+            if [[ -n "$plugin" ]]; then
+                echo "" >> "$setup_script"
+                echo "# Installing and configuring $plugin plugin" >> "$setup_script"
+                echo "if ! asdf plugin add $plugin; then" >> "$setup_script"
+                echo "    echo \"Warning: Failed to add plugin $plugin\" >&2" >> "$setup_script"
+                echo "    continue" >> "$setup_script"
+                echo "fi" >> "$setup_script"
+                echo "if ! asdf install $plugin stable 2>/dev/null && ! asdf install $plugin latest; then" >> "$setup_script"
+                echo "    echo \"Warning: Failed to install plugin $plugin\" >&2" >> "$setup_script"
+                echo "    continue" >> "$setup_script"
+                echo "fi" >> "$setup_script"
+                echo "if asdf list $plugin | grep -q stable; then" >> "$setup_script"
+                echo "    asdf global $plugin stable" >> "$setup_script"
+                echo "else" >> "$setup_script"
+                echo "    asdf global $plugin latest" >> "$setup_script"
+                echo "fi" >> "$setup_script"
+            fi
+        done
+    else
+        # Default: only nodejs (already available in base image)
+        echo "" >> "$setup_script"
+        echo "# No additional plugins specified. Using default nodejs from base image." >> "$setup_script"
+    fi
+    
+    chmod +x "$setup_script"
+    log_info "Plugin setup script generated successfully"
+}
+
 # Build Docker image
 build_docker_image() {
     log_step "Building Docker image..."
@@ -197,8 +254,10 @@ USAGE:
     ./wizard.sh [OPTIONS]
 
 OPTIONS:
-    --help, -h          Show this help message
-    --uninstall, -u     Uninstall claude-sandbox
+    --help, -h              Show this help message
+    --uninstall, -u         Uninstall claude-sandbox
+    --plugins PLUGINS       Comma-separated list of asdf plugins to install
+                           (e.g., --plugins uv,cmake,java)
 
 DESCRIPTION:
     This wizard manages installation, configuration, and uninstallation of
@@ -209,30 +268,61 @@ INSTALLATION:
     - System-wide (requires sudo): /usr/local/bin/claude-sandbox
     - User install: ~/.local/bin/claude-sandbox
 
+EXAMPLES:
+    ./wizard.sh                          # Install with default configuration
+    ./wizard.sh --plugins uv             # Install with Python/uv support
+    ./wizard.sh --plugins uv,cmake,java  # Install with multiple language support
+
 EOF
 }
 
 # Main function
 main() {
-    case "${1:-}" in
-        --help|-h)
-            show_usage
-            exit 0
-            ;;
-        --uninstall|-u)
-            check_privileges
-            uninstall
-            exit 0
-            ;;
-    esac
+    local plugins=""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_usage
+                exit 0
+                ;;
+            --uninstall|-u)
+                check_privileges
+                uninstall
+                exit 0
+                ;;
+            --plugins)
+                if [[ -z "${2:-}" ]]; then
+                    log_error "--plugins requires a value"
+                    exit 1
+                fi
+                plugins="$2"
+                shift 2
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
     
     echo "🐳 Claude Sandbox Setup Wizard"
     echo "=========================="
     echo ""
     
+    if [[ -n "$plugins" ]]; then
+        log_info "Plugins to install: $plugins"
+    else
+        log_info "Using default configuration (nodejs only)"
+    fi
+    echo ""
+    
     check_privileges
     check_prerequisites
     install_command
+    generate_plugin_setup_script "$plugins"
     build_docker_image
     show_summary
 }

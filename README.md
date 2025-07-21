@@ -75,15 +75,18 @@ This structure allows for future support of different operating systems and vers
 
 ### Ubuntu 24.04
 
-A Docker-based implementation using Node.js 24.4-slim as the base image.
+A Docker-based implementation using Node.js 24.4-slim as the base image with asdf version manager support.
 
 **Installation**: See [`ubuntu/24.04/README.md`](ubuntu/24.04/README.md) for detailed installation and usage instructions.
 
 **Features**:
 - Node.js environment with Claude Code pre-installed
+- asdf version manager for multi-language development support
+- Dynamic plugin configuration with `--plugins` option
 - Automatic directory mounting
 - Configuration persistence
-- Simple installation script
+- Security-hardened container setup with commit SHA verification
+- Robust error handling and stable version preferences
 
 ## Optional Aliases
 
