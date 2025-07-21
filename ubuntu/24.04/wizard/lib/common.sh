@@ -132,11 +132,11 @@ generate_plugin_setup_script() {
                 echo "# Installing and configuring $plugin plugin" >> "$setup_script"
                 echo "if ! asdf plugin add $plugin; then" >> "$setup_script"
                 echo "    echo \"Warning: Failed to add plugin $plugin\" >&2" >> "$setup_script"
-                echo "    continue" >> "$setup_script"
+                echo "    echo \"Skipping further operations for plugin $plugin due to error.\" >&2" >> "$setup_script"
                 echo "fi" >> "$setup_script"
                 echo "if ! asdf install $plugin stable 2>/dev/null && ! asdf install $plugin latest; then" >> "$setup_script"
                 echo "    echo \"Warning: Failed to install plugin $plugin\" >&2" >> "$setup_script"
-                echo "    continue" >> "$setup_script"
+                echo "    echo \"Skipping further operations for plugin $plugin due to error.\" >&2" >> "$setup_script"
                 echo "fi" >> "$setup_script"
                 echo "if asdf list $plugin | grep -q stable; then" >> "$setup_script"
                 echo "    asdf global $plugin stable" >> "$setup_script"
@@ -222,10 +222,10 @@ show_install_summary() {
 cleanup_docker() {
     # Stop and remove Docker containers
     log_step "Stopping and removing Docker containers..."
-    local containers=$(docker ps -a --filter "ancestor=claude-sandbox" --format "{{.ID}}" 2>/dev/null || true)
+    local containers="$(docker ps -a --filter "ancestor=claude-sandbox" --format "{{.ID}}" 2>/dev/null || true)"
     if [[ -n "$containers" ]]; then
-        docker stop $containers 2>/dev/null || true
-        docker rm $containers 2>/dev/null || true
+        echo "$containers" | xargs -r docker stop 2>/dev/null || true
+        echo "$containers" | xargs -r docker rm 2>/dev/null || true
         log_info "Stopped and removed Claude Sandbox containers"
     else
         log_info "No Claude Sandbox containers found"
