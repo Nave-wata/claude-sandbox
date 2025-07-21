@@ -151,9 +151,10 @@ This removes:
 ### Container Specifications
 
 - **Image Name**: `claude-sandbox`
-- **Container Name**: `claude-sandbox-{UID}` (unique per user)
+- **Container Name**: `claude-sandbox-{UID}-{timestamp}-{PID}-{random}` (unique per instance)
 - **Networking**: Host network (inherits from host)
 - **Storage**: Ephemeral containers (removed after each run)
+- **Conflict Detection**: Automatic detection and user-friendly error messages for rare name conflicts
 
 ### Volume Mounts
 
@@ -167,3 +168,10 @@ This removes:
 - No privileged access required
 - Containers are ephemeral and removed after each run
 - Only current directory and Claude config are mounted
+
+### Error Handling and Reliability
+
+- **Robust Container Name Generation**: Each component (user ID, timestamp, process ID, random suffix) is validated with comprehensive error checking
+- **Graceful Failure Detection**: Clear error messages guide users when rare conflicts occur
+- **Performance Optimized**: Uses efficient Docker API calls for container existence checks
+- **Fail-Fast Design**: Immediate error reporting prevents silent failures during initialization
