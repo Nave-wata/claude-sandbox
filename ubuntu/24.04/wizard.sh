@@ -124,9 +124,19 @@ generate_plugin_setup_script() {
             if [[ -n "$plugin" ]]; then
                 echo "" >> "$setup_script"
                 echo "# Installing and configuring $plugin plugin" >> "$setup_script"
-                echo "asdf plugin add $plugin || true" >> "$setup_script"
-                echo "asdf install $plugin latest" >> "$setup_script"
-                echo "asdf global $plugin latest" >> "$setup_script"
+                echo "if ! asdf plugin add $plugin; then" >> "$setup_script"
+                echo "    echo \"Warning: Failed to add plugin $plugin\" >&2" >> "$setup_script"
+                echo "    continue" >> "$setup_script"
+                echo "fi" >> "$setup_script"
+                echo "if ! asdf install $plugin stable 2>/dev/null && ! asdf install $plugin latest; then" >> "$setup_script"
+                echo "    echo \"Warning: Failed to install plugin $plugin\" >&2" >> "$setup_script"
+                echo "    continue" >> "$setup_script"
+                echo "fi" >> "$setup_script"
+                echo "if asdf list $plugin | grep -q stable; then" >> "$setup_script"
+                echo "    asdf global $plugin stable" >> "$setup_script"
+                echo "else" >> "$setup_script"
+                echo "    asdf global $plugin latest" >> "$setup_script"
+                echo "fi" >> "$setup_script"
             fi
         done
     else

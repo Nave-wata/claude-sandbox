@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y \
 # Layer 2: Install asdf version manager
 USER node
 WORKDIR /home/node
-RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.18.0
+RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf && \
+    cd ~/.asdf && \
+    git checkout 80fffd86853fbfcc31e6a52aee99f8ab3d5fae9f
 ENV PATH="/home/node/.asdf/shims:/home/node/.asdf/bin:$PATH"
 
 # Layer 3: Install Claude Code globally using system node (for now)
@@ -21,9 +23,7 @@ RUN npm install -g @anthropic-ai/claude-code
 # Layer 4: Setup plugin installations (dynamic script will be copied here)
 USER node
 COPY --chmod=755 setup-plugins.sh /tmp/setup-plugins.sh
-RUN if [ -f /tmp/setup-plugins.sh ]; then \
-        bash /tmp/setup-plugins.sh; \
-    fi
+RUN bash /tmp/setup-plugins.sh
 
 # Layer 5: Final workspace setup
 USER root
