@@ -20,16 +20,16 @@ This directory contains the Ubuntu 24.04 implementation of Claude Sandbox, provi
 2. **Run the setup wizard:**
    ```bash
    # Default installation (nodejs only)
-   ./wizard.sh
+   ./wizard.sh install
    
    # With custom plugins for multi-language development
-   ./wizard.sh --plugins uv,cmake,java
+   ./wizard.sh install --plugins uv,cmake,java
    
    # Python development environment
-   ./wizard.sh --plugins uv
+   ./wizard.sh install --plugins uv
    
    # Optional: System-wide installation (requires sudo)
-   sudo ./wizard.sh
+   sudo ./wizard.sh install
    ```
 
 3. **Verify installation:**
@@ -85,10 +85,18 @@ This implementation uses:
 ```
 ubuntu/24.04/
 ├── README.md                   # This documentation
+├── README.ja.md                # Japanese documentation  
 ├── wizard.sh                   # Setup and management wizard
 ├── claude-sandbox              # Main wrapper script
+├── wizard/                     # Wizard components
+│   ├── lib/
+│   │   └── common.sh          # Shared functions
+│   └── commands/
+│       ├── install.sh         # Install command
+│       └── uninstall.sh       # Uninstall command
 └── sandbox/                    # Container configuration
-    └── Dockerfile              # Container definition
+    ├── Dockerfile              # Container definition
+    └── setup-plugins.sh        # Plugin configuration script
 ```
 
 ### How It Works
@@ -106,7 +114,7 @@ The Docker container is pre-configured with Node.js 24.4, asdf version manager, 
 
 1. **Using Plugin Options**: Specify plugins during installation:
    ```bash
-   ./wizard.sh --plugins uv,cmake,java,golang
+   ./wizard.sh install --plugins uv,cmake,java,golang
    ```
 
 2. **Manual Dockerfile Modification**: Modify `sandbox/Dockerfile` for advanced customizations
@@ -158,7 +166,7 @@ source ~/.bashrc
 To remove Claude Sandbox:
 
 ```bash
-./wizard.sh --uninstall
+./wizard.sh uninstall
 ```
 
 This removes:

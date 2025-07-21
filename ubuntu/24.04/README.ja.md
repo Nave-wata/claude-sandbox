@@ -20,16 +20,16 @@
 2. **セットアップウィザードを実行:**
    ```bash
    # デフォルトインストール（nodejsのみ）
-   ./wizard.sh
+   ./wizard.sh install
    
    # マルチ言語開発用のカスタムプラグイン付き
-   ./wizard.sh --plugins uv,cmake,java
+   ./wizard.sh install --plugins uv,cmake,java
    
    # Python開発環境
-   ./wizard.sh --plugins uv
+   ./wizard.sh install --plugins uv
    
    # オプション: システム全体へのインストール（sudo権限が必要）
-   sudo ./wizard.sh
+   sudo ./wizard.sh install
    ```
 
 3. **インストールの確認:**
@@ -84,11 +84,19 @@ alias cs='claude-sandbox'        # 短縮エイリアス
 
 ```
 ubuntu/24.04/
-├── README.md                   # このドキュメント
+├── README.md                   # 英語ドキュメント
+├── README.ja.md                # このドキュメント（日本語）
 ├── wizard.sh                   # セットアップおよび管理ウィザード
 ├── claude-sandbox              # メインラッパースクリプト
+├── wizard/                     # ウィザードコンポーネント
+│   ├── lib/
+│   │   └── common.sh          # 共有関数
+│   └── commands/
+│       ├── install.sh         # インストールコマンド
+│       └── uninstall.sh       # アンインストールコマンド
 └── sandbox/                    # コンテナ設定
-    └── Dockerfile              # コンテナ定義
+    ├── Dockerfile              # コンテナ定義
+    └── setup-plugins.sh        # プラグイン設定スクリプト
 ```
 
 ### 動作方法
@@ -106,7 +114,7 @@ DockerコンテナはNode.js 24.4、asdfバージョンマネージャー、Clau
 
 1. **プラグインオプションの使用**: インストール時にプラグインを指定：
    ```bash
-   ./wizard.sh --plugins uv,cmake,java,golang
+   ./wizard.sh install --plugins uv,cmake,java,golang
    ```
 
 2. **手動Dockerfile変更**: 高度なカスタマイズのために`sandbox/Dockerfile`を変更
@@ -158,7 +166,7 @@ source ~/.bashrc
 Claude Sandbox を削除するには：
 
 ```bash
-./wizard.sh --uninstall
+./wizard.sh uninstall
 ```
 
 これにより以下が削除されます：

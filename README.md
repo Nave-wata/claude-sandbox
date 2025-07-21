@@ -63,10 +63,18 @@ claude-sandbox/
 └── ubuntu/                             # OS-specific implementations
     └── 24.04/                          # Ubuntu 24.04 implementation
         ├── README.md                   # Implementation-specific documentation
+        ├── README.ja.md                # Japanese documentation
         ├── wizard.sh                   # Setup and management wizard
         ├── claude-sandbox              # Main wrapper script
+        ├── wizard/                     # Wizard components
+        │   ├── lib/
+        │   │   └── common.sh          # Shared functions
+        │   └── commands/
+        │       ├── install.sh         # Install command
+        │       └── uninstall.sh       # Uninstall command
         └── sandbox/                    # Container configuration
-            └── Dockerfile              # Container definition
+            ├── Dockerfile              # Container definition
+            └── setup-plugins.sh        # Plugin configuration script
 ```
 
 This structure allows for future support of different operating systems and versions by adding new directories like `ubuntu/22.04/`, `alpine/3.18/`, etc.
