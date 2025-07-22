@@ -308,6 +308,73 @@ cleanup_docker() {
     fi
 }
 
+# Interactive confirmation for uninstallation
+confirm_uninstall() {
+    echo
+    log_warn "You are about to uninstall $SCRIPT_NAME"
+    
+    # Show current installation info
+    local target_script="$INSTALL_DIR/$SCRIPT_NAME"
+    if [[ -x "$target_script" ]]; then
+        echo -e "${BLUE}Current installation details:${NC}"
+        echo "  Location: $target_script"
+        local install_date
+        install_date=$(stat -c %y "$target_script" 2>/dev/null | cut -d' ' -f1 2>/dev/null) || install_date="Unknown"
+        echo "  Installed: $install_date"
+    fi
+    
+    # Check for Docker resources
+    if command -v docker >/dev/null 2>&1; then
+        echo
+        echo -e "${BLUE}Docker resources to be removed:${NC}"
+        
+        # Check containers
+        local containers
+        containers=$(docker ps -a --filter "ancestor=claude-sandbox" --format "{{.Names}}" 2>/dev/null | wc -l)
+        if [[ "$containers" -gt 0 ]]; then
+            echo "  - $containers Claude Sandbox container(s)"
+        fi
+        
+        # Check image
+        if docker image inspect "claude-sandbox" &> /dev/null; then
+            local image_size
+            image_size=$(docker images claude-sandbox:latest --format "{{.Size}}" 2>/dev/null || echo "Unknown")
+            echo "  - Docker image: claude-sandbox:latest (Size: $image_size)"
+        fi
+    fi
+    
+    echo
+    echo -e "${YELLOW}This will remove:${NC}"
+    echo "  • The claude-sandbox command"
+    echo "  • All Claude Sandbox Docker containers"
+    echo "  • The Claude Sandbox Docker image"
+    echo
+    echo -e "${RED}This action cannot be undone!${NC}"
+    echo
+    echo -e "${YELLOW}Do you want to proceed with uninstallation?${NC}"
+    echo "  [y] Yes, uninstall everything"
+    echo "  [n] No, cancel uninstallation"
+    echo
+    
+    while true; do
+        read -p "Choice [y/n]: " choice
+        case "$choice" in
+            [Yy]|[Yy][Ee][Ss])
+                echo
+                log_info "Proceeding with uninstallation..."
+                return 0
+                ;;
+            [Nn]|[Nn][Oo])
+                echo
+                return 1
+                ;;
+            *)
+                echo "Please answer y (yes) or n (no)."
+                ;;
+        esac
+    done
+}
+
 # Remove installed command
 remove_command() {
     local target_script="$INSTALL_DIR/$SCRIPT_NAME"

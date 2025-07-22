@@ -20,7 +20,20 @@ command_uninstall() {
     echo "=========================="
     echo ""
     
+    # Check if claude-sandbox is already uninstalled
+    if ! command -v claude-sandbox >/dev/null 2>&1 && [[ ! -f "/usr/local/bin/claude-sandbox" ]] && [[ ! -f "$HOME/.local/bin/claude-sandbox" ]]; then
+        log_info "Claude Sandbox is not installed or already uninstalled"
+        exit 0
+    fi
+    
     check_privileges
+    
+    # Confirm uninstallation with user
+    if ! confirm_uninstall; then
+        log_info "Uninstallation cancelled by user"
+        exit 0
+    fi
+    
     cleanup_docker
     remove_command
     
