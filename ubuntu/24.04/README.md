@@ -37,6 +37,20 @@ This directory contains the Ubuntu 24.04 implementation of Claude Sandbox, provi
    claude-sandbox --help    # This shows Claude Code help, not claude-sandbox help
    ```
 
+### Reinstallation
+
+If already installed, the wizard will automatically detect and interactively confirm with the user:
+
+```bash
+./wizard.sh install --plugins python,java
+
+# When existing installation is detected:
+# - Shows current installation details (location, installation date, Docker image info)
+# - Asks user to confirm reinstallation
+# - "Yes" removes existing installation and performs complete reinstall (command + Docker image)
+# - "No" cancels installation
+```
+
 ## Usage
 
 The `claude-sandbox` command works exactly like the regular `claude` command, but runs in a containerized environment:

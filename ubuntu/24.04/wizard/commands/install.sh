@@ -32,6 +32,7 @@ command_install() {
     
     if [[ -n "$plugins" ]]; then
         log_info "Plugins to install: $plugins"
+        log_info "Note: Plugin changes require Docker image rebuild"
     else
         log_info "Using default configuration (nodejs only)"
     fi
