@@ -11,6 +11,7 @@ NC='\033[0m' # No Color
 # Configuration
 INSTALL_DIR="/usr/local/bin"
 SCRIPT_NAME="claude-sandbox"
+DOCKER_IMAGE="claude-sandbox"
 
 # Logging functions
 log_info() {
@@ -289,7 +290,7 @@ show_install_summary() {
 cleanup_docker() {
     # Stop and remove Docker containers
     log_step "Stopping and removing Docker containers..."
-    local containers="$(docker ps -a --filter "ancestor=claude-sandbox" --format "{{.ID}}" 2>/dev/null || true)"
+    local containers="$(docker ps -a --filter "ancestor=${DOCKER_IMAGE}" --format "{{.ID}}" 2>/dev/null || true)"
     if [[ -n "$containers" ]]; then
         echo "$containers" | xargs -r docker stop 2>/dev/null || true
         echo "$containers" | xargs -r docker rm 2>/dev/null || true
@@ -300,9 +301,9 @@ cleanup_docker() {
     
     # Remove Docker image
     log_step "Removing Docker image..."
-    if docker image inspect "claude-sandbox" &> /dev/null; then
-        docker rmi "claude-sandbox" 2>/dev/null || true
-        log_info "Removed claude-sandbox Docker image"
+    if docker image inspect "${DOCKER_IMAGE}" &> /dev/null; then
+        docker rmi "${DOCKER_IMAGE}" 2>/dev/null || true
+        log_info "Removed ${DOCKER_IMAGE} Docker image"
     else
         log_info "Claude Sandbox Docker image not found"
     fi
@@ -319,7 +320,13 @@ confirm_uninstall() {
         echo -e "${BLUE}Current installation details:${NC}"
         echo "  Location: $target_script"
         local install_date
-        install_date=$(stat -c %y "$target_script" 2>/dev/null | cut -d' ' -f1 2>/dev/null) || install_date="Unknown"
+        local stat_output
+        stat_output=$(stat -c %y "$target_script" 2>/dev/null) || stat_output=""
+        if [[ -n "$stat_output" ]]; then
+            install_date=$(echo "$stat_output" | cut -d' ' -f1 2>/dev/null) || install_date="Unknown"
+        else
+            install_date="Unknown"
+        fi
         echo "  Installed: $install_date"
     fi
     
@@ -330,16 +337,16 @@ confirm_uninstall() {
         
         # Check containers
         local containers
-        containers=$(docker ps -a --filter "ancestor=claude-sandbox" --format "{{.Names}}" 2>/dev/null | wc -l)
+        containers=$(docker ps -a --filter "ancestor=${DOCKER_IMAGE}" --format "{{.Names}}" 2>/dev/null | wc -l)
         if [[ "$containers" -gt 0 ]]; then
             echo "  - $containers Claude Sandbox container(s)"
         fi
         
         # Check image
-        if docker image inspect "claude-sandbox" &> /dev/null; then
+        if docker image inspect "${DOCKER_IMAGE}" &> /dev/null; then
             local image_size
-            image_size=$(docker images claude-sandbox:latest --format "{{.Size}}" 2>/dev/null || echo "Unknown")
-            echo "  - Docker image: claude-sandbox:latest (Size: $image_size)"
+            image_size=$(docker images "${DOCKER_IMAGE}" --format "{{.Size}}" 2>/dev/null || echo "Unknown")
+            echo "  - Docker image: ${DOCKER_IMAGE} (Size: $image_size)"
         fi
     fi
     
